@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"os"
+	"strconv"
 )
 
 type Config struct {
@@ -17,45 +18,50 @@ type Config struct {
 	PgSSLMode     string
 	TelegramToken string
 	JWTSecret     string
-	MaxUploadSize int
+	MaxUsers      int
 }
 
+// LoadConfig for reading .env (или .env в dev)
 func LoadConfig() (*Config, error) {
-	//upload .env just for dev
-	if os.Gotenv("APP_ENV") == "" {
-		_ = godotenv.Load()
+	// Загружаем .env only in dev
+	if os.Getenv("APP_ENV") == "" {
+		if err := godotenv.Load(".env"); err != nil {
+			//or find in cmd/server
+			_ = godotenv.Load("../.env")
+		}
 	}
-}
 
-maxUsers := 5
-if v :=os.Getenv("MAX_USERS"); v != "" {
-	if parsed, err := strconv.Atoi(v); err == nil {
-		maxUsers = parsed
+	// Users limit
+	maxUsers := 5
+	if v := os.Getenv("MAX_USERS"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil {
+			maxUsers = parsed
+		}
 	}
+
+	cfg := &Config{
+		AppEnv:        getEnv("APP_ENV", "development"),
+		Port:          getEnv("PORT", "8080"),
+		PostgresUser:  getEnv("POSTGRES_USER", "todo"),
+		PostgresPass:  getEnv("POSTGRES_PASSWORD", ""),
+		PostgresDB:    getEnv("POSTGRES_DB", "todo_family"),
+		PostgresHost:  getEnv("POSTGRES_HOST", "localhost"),
+		PostgresPort:  getEnv("POSTGRES_PORT", "5432"),
+		PgSSLMode:     getEnv("PGSSLMODE", "disable"),
+		TelegramToken: getEnv("TELEGRAM_BOT_TOKEN", ""),
+		JWTSecret:     getEnv("JWT_SECRET", ""),
+		MaxUsers:      maxUsers,
+	}
+
+	return cfg, nil
 }
 
-cfg := &Config{
-	AppEnv:        getenv("APP_ENV", "development"),
-	Port:          getenv("PORT", ":8080"),
-	PostgresUser:  getenv("POSTGRES_USER", "todo"),
-	PostgresPass:  getenv("POSTGRES_PASS", ""),
-	PostgresDB:    getenv("POSTGRES_DB", "todo-family"),
-	PostgresHost:  getenv("POSTGRES_HOST", "localhost"),
-	PostgresPort:  getenv("POSTGRES_PORT", "5432"),
-	PgSSLMode:     getenv("POSTGRES_SSLMODE", "disable"),
-	TelegramToken: getenv("TELEGRAM_TOKEN", ""),
-	JWTSecret:     getenv("JWT_SECRET", ""),
-	MaxUsers:      maxUsers,
-}
-return cfg, nil
-}
-
-func (c *Config) PostgreesDSn() string {
+func (c *Config) PostgresDSN() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		c.PostgresUser, c.PostgresPass, c.PostgresHost, c.PostgresPort, c.PostgresDB, c.PgSSLMode)
 }
 
-func getenv(key string, def string) string {
+func getEnv(key, def string) string {
 	val := os.Getenv(key)
 	if val == "" {
 		return def

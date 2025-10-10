@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/UberionAI/todo-family/internal/store"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"net/http"
 )
@@ -72,7 +73,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RenameGroup(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
@@ -99,7 +100,7 @@ func (h *Handler) RenameGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return

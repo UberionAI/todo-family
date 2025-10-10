@@ -5,7 +5,7 @@ services:
     container_name: todo_family_db
     restart: unless-stopped
     env_file:
-      - .env
+      - cmd/server/.env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
